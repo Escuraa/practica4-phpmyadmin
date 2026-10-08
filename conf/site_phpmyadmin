@@ -1,0 +1,38 @@
+server {
+    listen 8080;
+    listen [::]:8080;
+    server_name _;
+
+    root /usr/share/phpmyadmin;
+    index index.php;
+
+    access_log /var/log/nginx/phpmyadmin_access.log;
+    error_log  /var/log/nginx/phpmyadmin_error.log;
+
+    # Ocultar la versión de Nginx
+    server_tokens off;
+
+    # Autenticación HTTP básica con el .htpasswd
+    auth_basic "Acceso restringido";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Bloquear directorios internos de phpMyAdmin
+    location ~ ^/(setup|libraries|templates|vendor|sql)/ {
+        deny all;
+    }
+
+    # Bloquear ficheros ocultos
+    location ~ /\. {
+        deny all;
+    }
+
+    # Procesar PHP con PHP-FPM
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
+    }
+}
